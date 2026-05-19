@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: security-defaults
+  namespace: skillpulse
+  annotations:
+    description: "Security best practices reference"
+spec:
+  containers:
+    - name: example
+      securityContext:
+        runAsNonRoot: true
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false

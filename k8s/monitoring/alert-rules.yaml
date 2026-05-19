@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alerts
+  namespace: skillpulse
+data:
+  alerts.yml: |
+    groups:
+      - name: skillpulse-alerts
+        rules:
+          - alert: PodCrashLooping
+            expr: rate(kube_pod_container_status_restarts_total{namespace="skillpulse"}[5m]) > 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Pod {{ $labels.pod }} is crash looping"
+              description: "Pod has restarted more than once in last 5 minutes"
+
+          - alert: HighCPU
+            expr: rate(container_cpu_usage_seconds_total{namespace="skillpulse"}[5m]) > 0.8
+            for: 3m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU on {{ $labels.pod }}"
+              description: "Pod CPU usage above 80% for 3 minutes"
+
+          - alert: HighMemory
+            expr: container_memory_usage_bytes{namespace="skillpulse"} > 100000000
+            for: 3m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory on {{ $labels.pod }}"
+              description: "Pod memory usage above 100MB for 3 minutes"
+
+          - alert: PodNotReady
+            expr: kube_pod_status_ready{namespace="skillpulse", condition="true"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Pod {{ $labels.pod }} is not ready"
+              description: "Pod has been not ready for 1 minute"

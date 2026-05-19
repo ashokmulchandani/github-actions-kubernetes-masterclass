@@ -1,0 +1,57 @@
+# Role: developer can only view things in skillpulse namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer-read-only
+  namespace: skillpulse
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+# Role: deployer can apply and restart
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deployer
+  namespace: skillpulse
+rules:
+  - apiGroups: ["", "apps"]
+    resources: ["deployments", "services", "configmaps", "secrets", "pods"]
+    verbs: ["get", "list", "create", "update", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["patch"]
+---
+# Bind developer role to a user
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-binding
+  namespace: skillpulse
+subjects:
+  - kind: User
+    name: developer
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: developer-read-only
+  apiGroup: rbac.authorization.k8s.io
+---
+# Bind deployer role to CI/CD service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: deployer-binding
+  namespace: skillpulse
+subjects:
+  - kind: ServiceAccount
+    name: github-actions
+    namespace: skillpulse
+roleRef:
+  kind: Role
+  name: deployer
+  apiGroup: rbac.authorization.k8s.io

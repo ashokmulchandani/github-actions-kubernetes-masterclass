@@ -1,0 +1,63 @@
+# ConfigMap: Prometheus configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: skillpulse
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+      - job_name: 'backend'
+        static_configs:
+          - targets: ['backend:8080']
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: ['skillpulse']
+---
+# Deployment: Prometheus server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: skillpulse
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:latest
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus/
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+---
+# Service: Access Prometheus
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: skillpulse
+spec:
+  type: NodePort
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+      nodePort: 30090

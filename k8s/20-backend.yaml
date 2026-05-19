@@ -59,6 +59,12 @@ spec:
                 secretKeyRef:
                   name: skillpulse-db
                   key: MYSQL_DATABASE
+          
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+
           resources:
             requests:
               cpu: 100m

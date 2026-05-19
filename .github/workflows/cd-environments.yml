@@ -1,0 +1,36 @@
+name: CD (Multi-Environment)
+
+on:
+  push:
+    branches:
+      - develop
+      - staging
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set environment
+        id: env
+        run: |
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            echo "ENV=prd" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_name }}" == "staging" ]; then
+            echo "ENV=stg" >> $GITHUB_OUTPUT
+          else
+            echo "ENV=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to ${{ steps.env.outputs.ENV }}
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/github-actions-kubernetes-masterclass
+            git pull origin ${{ github.ref_name }}
+            make deploy-${{ steps.env.outputs.ENV }}

@@ -1,0 +1,89 @@
+# Deployment: Loki (log storage)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki
+  namespace: skillpulse
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      containers:
+        - name: loki
+          image: grafana/loki:latest
+          ports:
+            - containerPort: 3100
+---
+# Service: Access Loki
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki
+  namespace: skillpulse
+spec:
+  selector:
+    app: loki
+  ports:
+    - port: 3100
+      targetPort: 3100
+---
+# DaemonSet: Promtail (collects logs from all pods)
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: promtail
+  namespace: skillpulse
+spec:
+  selector:
+    matchLabels:
+      app: promtail
+  template:
+    metadata:
+      labels:
+        app: promtail
+    spec:
+      containers:
+        - name: promtail
+          image: grafana/promtail:latest
+          args:
+            - -config.file=/etc/promtail/promtail.yml
+          volumeMounts:
+            - name: logs
+              mountPath: /var/log/pods
+              readOnly: true
+            - name: config
+              mountPath: /etc/promtail/
+      volumes:
+        - name: logs
+          hostPath:
+            path: /var/log/pods
+        - name: config
+          configMap:
+            name: promtail-config
+---
+# ConfigMap: Promtail configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+  namespace: skillpulse
+data:
+  promtail.yml: |
+    server:
+      http_listen_port: 9080
+    positions:
+      filename: /tmp/positions.yaml
+    clients:
+      - url: http://loki:3100/loki/api/v1/push
+    scrape_configs:
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: ['skillpulse']

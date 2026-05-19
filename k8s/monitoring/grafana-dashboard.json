@@ -1,0 +1,43 @@
+{
+  "dashboard": {
+    "title": "SkillPulse Overview",
+    "panels": [
+      {
+        "title": "Pod Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count(kube_pod_status_phase{namespace='skillpulse', phase='Running'})"
+          }
+        ]
+      },
+      {
+        "title": "CPU Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{namespace='skillpulse'}[5m])"
+          }
+        ]
+      },
+      {
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "container_memory_usage_bytes{namespace='skillpulse'}"
+          }
+        ]
+      },
+      {
+        "title": "HTTP Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{namespace='skillpulse'}[5m])"
+          }
+        ]
+      }
+    ]
+  }
+}
