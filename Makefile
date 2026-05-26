@@ -165,3 +165,5 @@ queue: ## Install RabbitMQ message queue + workers
 	@echo "  RabbitMQ Management: http://localhost:15672 (skillpulse/skillpulse123)"
 	@echo "  Workers: 2 replicas processing background tasks"
 	@echo ""
+cdn-upload: ## Upload static files to S3/CloudFront CDN
+	bash scripts/upload-to-cdn.sh

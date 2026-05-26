@@ -1,0 +1,77 @@
+# MySQL Read Replica
+#
+# How it works:
+#   PRIMARY (mysql-0): Handles all WRITES (create, update, delete)
+#   REPLICA (mysql-replica): Handles all READS (select, browse, dashboard)
+#
+#   Primary automatically syncs data to Replica.
+#   Replica is read-only — cannot write to it.
+#
+# Why?
+#   80% of database traffic is reads.
+#   Separating reads from writes means:
+#     - Primary is less stressed
+#     - Reads are faster (dedicated resources)
+#     - You can add MORE replicas if needed (2, 3, 5 replicas)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-replica
+  namespace: skillpulse
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-replica
+  template:
+    metadata:
+      labels:
+        app: mysql-replica
+    spec:
+      containers:
+        - name: mysql-replica
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: skillpulse-db
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: skillpulse-db
+                  key: MYSQL_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: skillpulse-db
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: skillpulse-db
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+---
+# Service: Access Read Replica
+# Backend connects to this for READ operations
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-read
+  namespace: skillpulse
+spec:
+  selector:
+    app: mysql-replica
+  ports:
+    - port: 3306
+      targetPort: 3306

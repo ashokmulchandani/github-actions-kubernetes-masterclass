@@ -63,6 +63,10 @@ spec:
               value: redis
             - name: REDIS_PORT
               value: "6379"
+            - name: DB_READ_HOST
+              value: mysql-read
+            - name: DB_WRITE_HOST
+              value: mysql
           
           securityContext:
             runAsNonRoot: true
