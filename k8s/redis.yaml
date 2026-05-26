@@ -1,0 +1,40 @@
+# Deployment: Redis cache
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: skillpulse
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:alpine
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+---
+# Service: Access Redis
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: skillpulse
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379

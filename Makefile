@@ -125,9 +125,43 @@ monitoring: ## Install Prometheus + Grafana + Loki in cluster
 monitoring-down: ## Remove Prometheus + Grafana
 	kubectl delete -f k8s/monitoring/grafana.yaml --ignore-not-found
 	kubectl delete -f k8s/monitoring/prometheus.yaml --ignore-not-found
-	
+
 monitor: ## Start AIOps monitoring agent
 	cd aiops && python monitor.py
 
 agent: ## Start interactive AIOps chat agent
 	cd aiops && python agent.py
+
+ingress: ## Install Nginx Ingress Controller + rules
+	kubectl apply -f k8s/ingress/ingress-controller.yaml
+	@echo "Waiting for ingress controller to start..."
+	sleep 30
+	kubectl apply -f k8s/ingress/ingress-rules.yaml
+	@echo ""
+	@echo "  Ingress ready! Access everything via port 80:"
+	@echo "  http://localhost/        → Frontend"
+	@echo "  http://localhost/api/    → Backend"
+	@echo "  http://localhost/grafana → Grafana"
+	@echo ""
+autoscale: ## Install metrics-server + HPA (auto-scaling)
+	kubectl apply -f k8s/autoscaling/metrics-server.yaml
+	kubectl apply -f k8s/autoscaling/hpa-backend.yaml
+	kubectl apply -f k8s/autoscaling/hpa-frontend.yaml
+	@echo ""
+	@echo "  Auto-scaling enabled!"
+	@echo "  Backend:  1-5 pods (scales at 70% CPU)"
+	@echo "  Frontend: 1-3 pods (scales at 70% CPU)"
+	@echo ""
+	@echo "  Check status: kubectl get hpa -n skillpulse"
+	@echo ""
+load-test: ## Run load test to trigger auto-scaling
+	bash scripts/load-test.sh
+queue: ## Install RabbitMQ message queue + workers
+	kubectl apply -f k8s/queue/rabbitmq.yaml
+	kubectl apply -f k8s/queue/dead-letter-queue.yaml
+	kubectl apply -f k8s/queue/worker.yaml
+	@echo ""
+	@echo "  Message Queue ready!"
+	@echo "  RabbitMQ Management: http://localhost:15672 (skillpulse/skillpulse123)"
+	@echo "  Workers: 2 replicas processing background tasks"
+	@echo ""

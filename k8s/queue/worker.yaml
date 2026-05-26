@@ -1,0 +1,63 @@
+# Worker - Processes background tasks from the queue
+# This is a separate pod that:
+#   - Listens to RabbitMQ
+#   - Picks up messages (events)
+#   - Processes them (send email, log analytics, etc.)
+#   - Acknowledges completion
+#
+# If worker crashes, message stays in queue → gets reprocessed later (safe!)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: skillpulse
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: worker
+          image: trainwithshubham/skillpulse-backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["./skillpulse", "--mode=worker"]
+          env:
+            - name: RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_USER
+              value: "skillpulse"
+            - name: RABBITMQ_PASS
+              value: "skillpulse123"
+            - name: DB_HOST
+              value: mysql
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: skillpulse-db
+                  key: MYSQL_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: skillpulse-db
+                  key: MYSQL_PASSWORD
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: skillpulse-db
+                  key: MYSQL_DATABASE
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi

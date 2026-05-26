@@ -59,6 +59,10 @@ spec:
                 secretKeyRef:
                   name: skillpulse-db
                   key: MYSQL_DATABASE
+            - name: REDIS_HOST
+              value: redis
+            - name: REDIS_PORT
+              value: "6379"
           
           securityContext:
             runAsNonRoot: true

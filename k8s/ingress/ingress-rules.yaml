@@ -1,0 +1,47 @@
+# Ingress Rules - Routes traffic based on URL path
+# Think of this as the "reception desk" rules:
+#   /api/*     → send to backend service
+#   /grafana/* → send to grafana service
+#   /*         → send to frontend service (default)
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: skillpulse-ingress
+  namespace: skillpulse
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Rate limiting: max 100 requests per minute per IP
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          # /api/* → Backend service
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+
+          # /grafana/* → Grafana dashboard
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
+
+          # /* → Frontend (default, catches everything else)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

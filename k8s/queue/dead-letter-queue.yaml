@@ -1,0 +1,44 @@
+# Dead Letter Queue (DLQ) Configuration
+# 
+# What is a Dead Letter Queue?
+# When a message FAILS to process 3 times, instead of losing it forever,
+# it goes to a special "dead letter" queue for investigation.
+#
+# Think of it like:
+#   Regular queue = mailbox for deliverable letters
+#   Dead letter queue = "return to sender" pile for undeliverable letters
+#
+# Flow:
+#   Message → Worker tries → FAILS
+#   Message → Worker retries → FAILS (2nd time)
+#   Message → Worker retries → FAILS (3rd time)
+#   Message → Moved to DLQ → You investigate later
+#
+# This is configured in RabbitMQ via ConfigMap:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+  namespace: skillpulse
+data:
+  definitions.json: |
+    {
+      "queues": [
+        {
+          "name": "skillpulse.tasks",
+          "durable": true,
+          "arguments": {
+            "x-dead-letter-exchange": "",
+            "x-dead-letter-routing-key": "skillpulse.tasks.dlq",
+            "x-message-ttl": 30000,
+            "x-max-retries": 3
+          }
+        },
+        {
+          "name": "skillpulse.tasks.dlq",
+          "durable": true,
+          "arguments": {}
+        }
+      ]
+    }
