@@ -125,3 +125,9 @@ monitoring: ## Install Prometheus + Grafana + Loki in cluster
 monitoring-down: ## Remove Prometheus + Grafana
 	kubectl delete -f k8s/monitoring/grafana.yaml --ignore-not-found
 	kubectl delete -f k8s/monitoring/prometheus.yaml --ignore-not-found
+	
+monitor: ## Start AIOps monitoring agent
+	cd aiops && python monitor.py
+
+agent: ## Start interactive AIOps chat agent
+	cd aiops && python agent.py
