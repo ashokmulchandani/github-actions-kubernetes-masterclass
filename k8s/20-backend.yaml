@@ -67,6 +67,10 @@ spec:
               value: mysql-read
             - name: DB_WRITE_HOST
               value: mysql
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector:4318
+            - name: OTEL_SERVICE_NAME
+              value: skillpulse-backend
           
           securityContext:
             runAsNonRoot: true

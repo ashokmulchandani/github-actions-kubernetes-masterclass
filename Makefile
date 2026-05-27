@@ -167,3 +167,11 @@ queue: ## Install RabbitMQ message queue + workers
 	@echo ""
 cdn-upload: ## Upload static files to S3/CloudFront CDN
 	bash scripts/upload-to-cdn.sh
+
+tracing: ## Install OpenTelemetry + Jaeger (request tracing)
+	kubectl apply -f k8s/monitoring/opentelemetry.yaml
+	@echo ""
+	@echo "  Tracing enabled!"
+	@echo "  Jaeger UI: http://localhost:30086"
+	@echo "  Send traces to: otel-collector:4317 (gRPC) or :4318 (HTTP)"
+	@echo ""
